@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+psycopg2-binary
+sqlalchemy
+openai
+python-dotenv
+faker
+pandas
+neo4j
+numpy
+pyjwt
+bcrypt
