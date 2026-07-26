@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const API_URL = "http://localhost:8000/api/chat/";
+import { API_BASE } from "./config.js";
+const API_URL = `${API_BASE}/api/chat/`;
 
 const STATUS_STYLES = {
   Solved: { bg: "rgba(63,182,139,0.15)", fg: "#3FB68B", border: "rgba(63,182,139,0.4)" },

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "./config.js";
 
 const STATUS_STYLES = {
   Solved: { bg: "rgba(63,182,139,0.15)", fg: "#3FB68B", border: "rgba(63,182,139,0.4)" },

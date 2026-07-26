@@ -1,101 +1,122 @@
-# KSP Crime AI — Phase 0: Foundation
+# KSP Crime AI — Intelligent Conversational AI for the KSP Crime Database
 
-This phase sets up the environment only. No chat, no NL→SQL yet — that's Module 1, built next.
+An offline-first, conversational intelligence platform for crime investigation.
+Investigators ask questions in plain English and get answers, a network graph of
+hidden connections, trend dashboards, explainable offender risk profiles, and
+auto-generated case summaries — all running on local, free infrastructure with
+no external API keys and no internet dependency at runtime.
 
-## What's in this phase
+---
 
-- `docker-compose.yml` — Postgres + Ollama + backend, all networked together
-- `backend/data/schema.sql` — the DB schema (auto-loaded into Postgres on first boot)
-- `backend/data/generate_data.py` — synthetic dataset generator (Faker)
-- `backend/app/main.py` — FastAPI skeleton with two health checks (API + DB)
+## What's implemented
 
-Stack decision: **Ollama only**, no Groq/OpenAI/Anthropic API key anywhere. Fully local,
-fully free, works with the venue wifi off.
+| Module | Status | What it does |
+|---|---|---|
+| Conversational Query | ✅ Full stack | Plain-English → SQL, follow-up context memory, self-correction on query errors |
+| Network Analysis | ✅ Full stack | Neo4j graph; detects vehicles shared across accused in different districts |
+| Trend Analytics | ✅ Full stack | Charts by crime type/district/status, monthly timeline, hotspot map |
+| Offender Profiling | ✅ Full stack | Transparent weighted risk score (not a black-box model), full breakdown UI |
+| Case Investigation | ✅ Full stack | LLM case summary + leads, similar-case retrieval via embedding similarity |
+| Explainability | ✅ Woven throughout | Every AI output shows its evidence — SQL shown, risk factors broken down, similarity scores visible |
+| Role-Based Access | ✅ Partial | JWT auth, 5 roles, 2 endpoints role-gated as proof of concept, audit logging |
+| Sociological Insights | ⬜ Not built | Planned: demographic correlation, reuses the trend-aggregation pattern |
+| Financial Link Analysis | ⬜ Not built | Planned: extend the Neo4j graph with account/transaction nodes |
+| Forecasting | ⬜ Not built | Planned: moving-average trend flag on existing aggregation endpoints |
 
-## Prerequisites
+---
 
-- Docker + Docker Compose installed
-- ~6GB free RAM for the Ollama model once loaded (16GB machine recommended)
+## Architecture
 
-## Setup steps
-
-### 1. Bring up Postgres + Ollama first (backend needs both alive)
-
-```bash
-docker compose up -d postgres ollama
+```
+React frontend (Vite)
+        │
+FastAPI gateway (JWT auth, RBAC, audit log)
+        │
+   ┌────┴────┬──────────────┐
+Query Engine  Graph Engine   Analytics Engine
+(NL→SQL,      (Cypher,       (trends, risk
+ Ollama LLM)   hidden links)  scoring)
+        │            │              │
+   PostgreSQL      Neo4j       PostgreSQL
 ```
 
-Wait ~10s for Postgres's healthcheck to pass, then confirm the schema loaded:
+**Why two databases?** Records (FIRs, accused, victims) fit SQL naturally, but
+"find hidden connections across cases" is a graph-traversal problem — SQL joins
+get messy fast, Neo4j makes it a straightforward Cypher query instead.
+
+---
+
+## Tech stack
+
+- **Frontend:** React (Vite), Recharts, Leaflet, Cytoscape.js
+- **Backend:** FastAPI (Python)
+- **Databases:** PostgreSQL 16, Neo4j 5 Community
+- **LLM:** Llama 3.1 8B via Ollama (local, OpenAI-compatible API, zero external cost)
+- **Auth:** JWT (PyJWT) + bcrypt
+- **Similarity search:** cosine similarity over Ollama embeddings (nomic-embed-text), stored in Postgres
+- **Orchestration:** Docker Compose
+
+---
+
+## Setup
+
+Additional detailed guides, in the order they were built:
+
+1. This file — Phase 0 foundation (Postgres, Ollama, synthetic data)
+2. [`MODULE_2_GUIDE.md`](MODULE_2_GUIDE.md) — Neo4j graph sync
+3. [`MODULE_6_10_GUIDE.md`](MODULE_6_10_GUIDE.md) — embeddings, auth, RBAC
+
+### Quick start
 
 ```bash
-docker exec -it ksp_postgres psql -U ksp_user -d ksp_crime -c "\dt"
-```
-
-You should see 7 tables: `accused`, `victim`, `crime`, `crime_accused`, `crime_victim`,
-`vehicle`, `crime_vehicle`.
-
-### 2. Pull the LLM model into the Ollama container
-
-```bash
+docker compose up -d postgres ollama neo4j
 docker exec -it ksp_ollama ollama pull llama3.1:8b
-```
-
-This is a one-time ~4.9GB download — it's cached in the `ollama_data` Docker volume,
-so you won't re-download it on every `docker compose up`.
-
-If `llama3.1:8b` is slow on your machine, lighter alternatives are `mistral:7b` or
-`qwen2.5:7b` — swap the `OLLAMA_MODEL` env var in `docker-compose.yml` and re-pull.
-
-### 3. Bring up the backend
-
-```bash
+docker exec -it ksp_ollama ollama pull nomic-embed-text
 docker compose up -d --build backend
-```
 
-### 4. Generate the synthetic dataset
-
-```bash
 docker exec -it ksp_backend python data/generate_data.py
+docker exec -it ksp_backend python data/sync_to_neo4j.py
+Get-Content backend\data\schema_module6_10.sql | docker exec -i ksp_postgres psql -U ksp_user -d ksp_crime
+docker exec -it ksp_backend python data/seed_users.py
+docker exec -it ksp_backend python data/build_embeddings.py
+
+cd frontend
+npm install
+npm run dev
 ```
 
-This creates:
-- 300 accused (35 deliberately marked as repeat offenders, linked to 3–6 crimes each)
-- 400 victims
-- 150 vehicles (8 deliberately reused across crimes in *different* districts — this is
-  the seeded "hidden connection" that Module 2 will surface later; it's inert for now)
-- 800 crimes, spread across 5 Karnataka districts (Bengaluru, Mysuru, Mangaluru,
-  Belagavi, Hubballi) and their police stations
+Open http://localhost:5173.
 
-### 5. Verify everything
+### Demo accounts
 
-```bash
-curl http://localhost:8000/health
-curl http://localhost:8000/health/db
-```
+| Username | Password | Role |
+|---|---|---|
+| admin | admin123 | Admin |
+| supervisor1 | super123 | Supervisor |
+| investigator1 | invest123 | Investigator |
+| analyst1 | analyst123 | Analyst |
+| viewer1 | viewer123 | Viewer |
 
-`/health/db` should return the 7 table names and a `crime_row_count` of 800.
+Log in as `investigator1` to see everything, then try `analyst1` and open the
+Network Analysis tab — that's the live RBAC demo (access correctly denied).
 
-## Phase 0 exit criteria (don't move to Module 1 until all of these are true)
+---
 
-- [ ] `docker compose up -d` brings up all three containers with no errors
-- [ ] `\dt` in psql shows all 7 tables
-- [ ] `ollama pull` completed and `docker exec -it ksp_ollama ollama list` shows the model
-- [ ] `generate_data.py` ran without errors
-- [ ] `/health/db` returns `"status": "ok"` with `crime_row_count: 800`
+## Known limitations
 
-## Resetting the database (if you change the schema)
+- Fully local by design — the public demo link (see submission) is a temporary
+  ngrok tunnel over a laptop running the full Docker stack, not a persistent
+  cloud deployment
+- Only 2 of the API endpoints are currently role-gated as a proof of concept; the
+  pattern (`Depends(require_role(...))`) extends to any other route in one line
+- The hotspot map (Leaflet/OpenStreetMap) requires internet for map tiles even
+  though the rest of the system is offline-capable
+- Local 8B LLM inference on CPU takes 20–60 seconds per conversational query —
+  the non-LLM endpoints (trends, network, profiles) are sub-second
 
-```bash
-docker compose down -v
-docker compose up -d postgres ollama
-# re-run generate_data.py after the backend is up again
-```
+---
 
-## What's next
+## Links
 
-Module 1 (Conversational Interface) — NL→SQL chat endpoint, context memory for
-follow-up questions, and safety guardrails on generated SQL. This will add:
-`backend/app/routes/chat.py`, `backend/app/services/nl_to_sql.py`,
-`backend/app/services/context_memory.py`.
-
-Not built yet: frontend, Modules 2–10. One thing at a time.
+- **Demo video:** [add link]
+- **Deployed link:** [add link]

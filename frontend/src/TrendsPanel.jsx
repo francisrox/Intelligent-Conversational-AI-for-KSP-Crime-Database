@@ -14,7 +14,7 @@ import {
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "./config.js";
 
 const CRIME_TYPE_COLORS = {
   Burglary: "#4F9DDE",

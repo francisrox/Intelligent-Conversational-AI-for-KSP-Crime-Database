@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "./config.js";
 
 const TIER_STYLES = {
   High: { bg: "rgba(229,72,77,0.15)", fg: "#E5484D", border: "rgba(229,72,77,0.4)" },

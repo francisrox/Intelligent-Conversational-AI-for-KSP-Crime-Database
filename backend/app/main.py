@@ -8,13 +8,25 @@ app = FastAPI(title="KSP Crime AI - Backend", version="0.1.0")
 
 # Frontend runs on a different port (Vite dev server) — needs CORS to call this API.
 # Locked to localhost dev ports only; tighten further before any real deployment.
+# TEMPORARY for public demo (ngrok/deployment): allowing any origin so the
+# tunneled frontend URL (which changes each time ngrok restarts) can always
+# reach this API. Revert to the localhost-only allowlist below for any real
+# deployment beyond a hackathon demo window.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,  # must be False when allow_origins is "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Original localhost-only version, restore this after the demo:
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 app.include_router(chat.router, prefix="/api/chat")
 app.include_router(network.router, prefix="/api/network")
@@ -66,3 +78,14 @@ def health_graph():
         return {"status": "ok", "node_counts": node_counts, "relationship_counts": rel_counts}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
+
+
+# ---- Serve the built frontend from this same port (for single-tunnel demos) ----
+# Only kicks in if frontend/dist has been built and mounted into this container.
+# Must be mounted LAST so it never shadows the /api/* routes above.
+import os
+from fastapi.staticfiles import StaticFiles
+
+_frontend_dist = "/app/frontend_dist"
+if os.path.isdir(_frontend_dist):
+    app.mount("/", StaticFiles(directory=_frontend_dist, html=True), name="frontend")

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import GraphCanvas from "./GraphCanvas.jsx";
 
-const API_BASE = "http://localhost:8000";
+import { API_BASE } from "./config.js";
 
 function hiddenConnectionsToGraph(connections) {
   const nodes = {};
