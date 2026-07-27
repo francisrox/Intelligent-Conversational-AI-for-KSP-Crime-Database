@@ -60,11 +60,6 @@ get messy fast, Neo4j makes it a straightforward Cypher query instead.
 
 ## Setup
 
-Additional detailed guides, in the order they were built:
-
-1. This file — Phase 0 foundation (Postgres, Ollama, synthetic data)
-2. [`MODULE_2_GUIDE.md`](MODULE_2_GUIDE.md) — Neo4j graph sync
-3. [`MODULE_6_10_GUIDE.md`](MODULE_6_10_GUIDE.md) — embeddings, auth, RBAC
 
 ### Quick start
 
@@ -91,11 +86,11 @@ Open http://localhost:5173.
 
 | Username | Password | Role |
 |---|---|---|
-| admin | admin123 | Admin |
-| supervisor1 | super123 | Supervisor |
-| investigator1 | invest123 | Investigator |
-| analyst1 | analyst123 | Analyst |
-| viewer1 | viewer123 | Viewer |
+| admin | admin1_password | Admin |
+| supervisor1 | super1_password | Supervisor |
+| investigator1 | invest_password | Investigator |
+| analyst1 | analyst_password | Analyst |
+| viewer1 | viewer1_password | Viewer |
 
 Log in as `investigator1` to see everything, then try `analyst1` and open the
 Network Analysis tab — that's the live RBAC demo (access correctly denied).
@@ -116,7 +111,3 @@ Network Analysis tab — that's the live RBAC demo (access correctly denied).
 
 ---
 
-## Links
-
-- **Demo video:** [add link]
-- **Deployed link:** [add link]
