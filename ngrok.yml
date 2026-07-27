@@ -1,6 +1,6 @@
 ﻿version: "3"
 agent:
-    authtoken: 39ET8se2iAITkMipRRVXewD33Mi_aqrkEJjCud3gBKepS1t3
+    authtoken: Ngrok_Token
 tunnels:
   backend:
     proto: http
