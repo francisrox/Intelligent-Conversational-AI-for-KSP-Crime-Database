@@ -15,11 +15,11 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://ksp_user:ksp_pass@localho
 
 # username, password, role — demo credentials only, not for real deployment
 DEMO_USERS = [
-    ("admin", "admin123", "Admin"),
-    ("supervisor1", "super123", "Supervisor"),
-    ("investigator1", "invest123", "Investigator"),
-    ("analyst1", "analyst123", "Analyst"),
-    ("viewer1", "viewer123", "Viewer"),
+    ("admin", "admin_password", "Admin"),
+    ("supervisor1", "supervisor1_password", "Supervisor"),
+    ("investigator1", "investigator1_password", "Investigator"),
+    ("analyst1", "analyst1_password", "Analyst"),
+    ("viewer1", "viewer1_password", "Viewer"),
 ]
 
 
